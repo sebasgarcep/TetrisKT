@@ -1,0 +1,7 @@
+const val UI_WIDTH = 120.0
+const val PADDING = 10.0
+const val BLOCK_SIZE = 48.0
+const val BOARD_HEIGHT = 20.0
+const val BOARD_WIDTH = 10.0
+const val CANVAS_HEIGHT = BLOCK_SIZE * BOARD_HEIGHT
+const val CANVAS_WIDTH = BLOCK_SIZE * BOARD_WIDTH
