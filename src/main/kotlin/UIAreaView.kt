@@ -7,6 +7,9 @@ class UIAreaView : Fragment() {
 
         label("Level")
         label("Score")
-        button("Start")
+        button("Start") {
+            // FIXME: This is a workaround, and we should find a more global way to solve the problem
+            style { focusTraversable = false }
+        }
     }
 }

@@ -145,6 +145,7 @@ class GameManager {
     }
 
     private fun switchToNextPiece() {
+        // Add block to board
         for (x in 0 until Piece.gridSize) {
             for (y in 0 until Piece.gridSize) {
                 // If this is an empty square, then we do not care about it
@@ -156,6 +157,20 @@ class GameManager {
                 board.set(boardX, boardY, currentPiece.getColor())
             }
         }
+        // Clear completed lines
+        for (y in 0 until BOARD_HEIGHT.toInt()) {
+            val shouldRemoveLine = (0 until BOARD_WIDTH.toInt()).all { x -> board.getActive(x, y) }
+            if (shouldRemoveLine) {
+                // Move all lines above one step down
+                for (y2 in (y - 1) downTo 1) {
+                    for (x in 0 until BOARD_WIDTH.toInt()) {
+                        val color = board.get(x, y2)
+                        board.set(x, y2 + 1, color)
+                    }
+                }
+            }
+        }
+        // Get next piece
         setNextPieceState(nextPiece)
     }
 
