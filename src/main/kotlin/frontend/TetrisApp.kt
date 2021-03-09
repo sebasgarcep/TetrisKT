@@ -1,3 +1,9 @@
+package frontend
+
+import CANVAS_HEIGHT
+import CANVAS_WIDTH
+import PADDING
+import UI_WIDTH
 import javafx.stage.Stage
 import tornadofx.App
 

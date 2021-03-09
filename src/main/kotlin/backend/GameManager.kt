@@ -1,116 +1,7 @@
-import javafx.scene.paint.Color
+package backend
 
-class BlockGrid(val width: Int, val height: Int) {
-    private val grid = Array(width) { Array<Color?>(height) { null } }
-    fun get(x: Int, y: Int): Color? = grid[x][y]
-    fun getActive(x: Int, y: Int): Boolean = get(x, y) != null
-    fun set(x: Int, y: Int, value: Color?) { grid[x][y] = value }
-}
-
-enum class PieceType {
-    O {
-        override fun color(): Color = Color.YELLOW
-        override fun initBlockGrid(piece: Piece) {
-            piece.setActive(Piece.originX, Piece.originY, true)
-            piece.setActive(Piece.originX, Piece.originY + 1, true)
-            piece.setActive(Piece.originX + 1, Piece.originY, true)
-            piece.setActive(Piece.originX + 1, Piece.originY + 1, true)
-        }
-    },
-    I {
-        override fun color(): Color = Color.CYAN
-        override fun initBlockGrid(piece: Piece) {
-            piece.setActive(Piece.originX, Piece.originY - 1, true)
-            piece.setActive(Piece.originX, Piece.originY, true)
-            piece.setActive(Piece.originX, Piece.originY + 1, true)
-            piece.setActive(Piece.originX, Piece.originY + 2, true)
-        }
-    },
-    T {
-        override fun color(): Color = Color.PURPLE
-        override fun initBlockGrid(piece: Piece) {
-            piece.setActive(Piece.originX, Piece.originY, true)
-            piece.setActive(Piece.originX, Piece.originY - 1, true)
-            piece.setActive(Piece.originX - 1, Piece.originY, true)
-            piece.setActive(Piece.originX + 1, Piece.originY, true)
-        }
-    },
-    S {
-        override fun color(): Color = Color.GREEN
-        override fun initBlockGrid(piece: Piece) {
-            piece.setActive(Piece.originX, Piece.originY, true)
-            piece.setActive(Piece.originX + 1, Piece.originY, true)
-            piece.setActive(Piece.originX, Piece.originY + 1, true)
-            piece.setActive(Piece.originX - 1, Piece.originY + 1, true)
-        }
-    },
-    Z {
-        override fun color(): Color = Color.RED
-        override fun initBlockGrid(piece: Piece) {
-            piece.setActive(Piece.originX, Piece.originY, true)
-            piece.setActive(Piece.originX - 1, Piece.originY, true)
-            piece.setActive(Piece.originX, Piece.originY + 1, true)
-            piece.setActive(Piece.originX + 1, Piece.originY + 1, true)
-        }
-    },
-    L {
-        override fun color(): Color = Color.ORANGE
-        override fun initBlockGrid(piece: Piece) {
-            piece.setActive(Piece.originX, Piece.originY - 1, true)
-            piece.setActive(Piece.originX, Piece.originY, true)
-            piece.setActive(Piece.originX, Piece.originY + 1, true)
-            piece.setActive(Piece.originX + 1, Piece.originY + 1, true)
-        }
-    },
-    J {
-        override fun color(): Color = Color.BLUE
-        override fun initBlockGrid(piece: Piece) {
-            piece.setActive(Piece.originX, Piece.originY - 1, true)
-            piece.setActive(Piece.originX, Piece.originY, true)
-            piece.setActive(Piece.originX, Piece.originY + 1, true)
-            piece.setActive(Piece.originX - 1, Piece.originY + 1, true)
-        }
-    };
-
-    abstract fun color(): Color
-    abstract fun initBlockGrid(piece: Piece)
-
-    companion object {
-        fun getRandom(): PieceType = values().random()
-    }
-}
-
-class Piece(private val pieceType: PieceType, init: Boolean = false) {
-    private val blockGrid = BlockGrid(gridSize, gridSize)
-    init { if (init) pieceType.initBlockGrid(this) }
-
-    fun setActive(x: Int, y: Int, active: Boolean) = blockGrid.set(x, y, if (active) pieceType.color() else null)
-    fun getActive(x: Int, y: Int): Boolean = blockGrid.getActive(x, y)
-
-    fun getColor(): Color = pieceType.color()
-
-    fun getRotate(): Piece {
-        val nextPiece = Piece(pieceType)
-        for(x in 0 until gridSize) {
-            for (y in 0 until gridSize) {
-                val centeredX = x - originX
-                val centeredY = y - originY
-                val nextX = -centeredY + originX
-                val nextY = centeredX + originY
-                nextPiece.setActive(nextX, nextY, this.getActive(x, y))
-            }
-        }
-        return nextPiece
-    }
-
-    companion object {
-        const val gridSize = 5
-        const val originX = 2
-        const val originY = 2
-
-        fun getRandom(): Piece = Piece(PieceType.getRandom(), true)
-    }
-}
+import BOARD_HEIGHT
+import BOARD_WIDTH
 
 class GameManager {
     var board = BlockGrid(BOARD_WIDTH.toInt(), BOARD_HEIGHT.toInt())
@@ -119,6 +10,10 @@ class GameManager {
     var currentY: Int = 0
     lateinit var nextPiece: Piece
     init { setNextPieceState(Piece.getRandom()) }
+    var score: Int = 0
+    private var rowsCleared: Int = 0
+
+    fun getLevel(): Int = Math.min(20, 1 + (rowsCleared / 10))
 
     fun tryRotateCurrentPiece() {
         val proposedPiece = currentPiece.getRotate()
@@ -158,9 +53,11 @@ class GameManager {
             }
         }
         // Clear completed lines
+        var currentRowsCleared = 0
         for (y in 0 until BOARD_HEIGHT.toInt()) {
             val shouldRemoveLine = (0 until BOARD_WIDTH.toInt()).all { x -> board.getActive(x, y) }
             if (shouldRemoveLine) {
+                currentRowsCleared += 1
                 // Move all lines above one step down
                 for (y2 in (y - 1) downTo 1) {
                     for (x in 0 until BOARD_WIDTH.toInt()) {
@@ -168,6 +65,21 @@ class GameManager {
                         board.set(x, y2 + 1, color)
                     }
                 }
+            }
+        }
+        rowsCleared += currentRowsCleared
+        when (currentRowsCleared) {
+            1 -> {
+                score += 40
+            }
+            2 -> {
+                score += 100
+            }
+            3 -> {
+                score += 300
+            }
+            4 -> {
+                score += 1200
             }
         }
         // Get next piece
@@ -235,8 +147,7 @@ class GameManager {
         return blockGrid
     }
 
-    fun tick(): BlockGrid {
+    fun tick() {
         tryMoveDownCurrentPiece()
-        return getUIBlockGrid()
     }
 }
